@@ -202,6 +202,51 @@
             cursor: pointer;
         }
 
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: var(--text-tertiary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            margin: 0;
+            width: auto;
+            box-shadow: none;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-primary);
+            background: none;
+            transform: translateY(-50%);
+            box-shadow: none;
+        }
+
+        .password-toggle:active {
+            transform: translateY(-50%);
+        }
+
+        .password-toggle:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         small {
             display: block;
             margin-top: 6px;
@@ -553,11 +598,20 @@
                         🔐 Auto Fill Access Token</h3>
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label for="loginUsername">Username</label>
-                        <input type="text" id="loginUsername" placeholder="john_doe" value="john_doe">
+                        <select id="loginUsername">
+                            <option value="john_doe1">john_doe1</option>
+                            <option value="john_doe2">john_doe2</option>
+                            <option value="john_doe3">john_doe3</option>
+                        </select>
                     </div>
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" placeholder="Secret@123" value="Secret@123">
+                        <div class="password-wrapper">
+                            <input type="password" id="loginPassword" placeholder="Secret@123" value="Secret@123">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                                👁️
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label>
@@ -682,7 +736,14 @@
 
                 <div class="form-group">
                     <label for="event">Event</label>
-                    <input type="text" id="event" value="create_room_request" placeholder="create_room_request">
+                    <select id="event" onchange="handleEventChange()">
+                        <option value="create_room_request">create_room_request</option>
+                        <option value="join_room_request">join_room_request</option>
+                        <option value="leave_room_request">leave_room_request</option>
+                        <option value="get_room_list_request">get_room_list_request</option>
+                        <option value="custom">Custom Event...</option>
+                    </select>
+                    <input type="text" id="customEvent" style="display: none; margin-top: 8px;" class="form-group" placeholder="Enter custom event name">
                 </div>
 
                 <div class="form-group">
@@ -717,6 +778,20 @@
                 serverUrlInput.value = window.CONFIG.WEB_SOCKET_SERVER;
             }
         });
+
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleBtn = passwordInput.parentElement.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
 
         // Update password field visibility
         document.getElementById('isPublic').addEventListener('change', function () {
@@ -1220,10 +1295,69 @@
             sendMessage(message);
         }
 
+        function handleEventChange() {
+            const eventSelect = document.getElementById('event');
+            const customEventInput = document.getElementById('customEvent');
+            const dataTextarea = document.getElementById('data');
+            
+            if (eventSelect.value === 'custom') {
+                customEventInput.style.display = 'block';
+                customEventInput.value = '';
+                customEventInput.focus();
+            } else {
+                customEventInput.style.display = 'none';
+                // Update default data based on selected event
+                updateDefaultData(eventSelect.value);
+            }
+        }
+
+        function updateDefaultData(eventName) {
+            const dataTextarea = document.getElementById('data');
+            let defaultData = {};
+            
+            switch(eventName) {
+                case 'create_room_request':
+                    defaultData = {
+                        "max_players": 4,
+                        "is_public": true,
+                        "bet_value": 1000
+                    };
+                    break;
+                case 'join_room_request':
+                    defaultData = {
+                        "room_id": ""
+                    };
+                    break;
+                case 'leave_room_request':
+                    defaultData = {
+                        "room_id": ""
+                    };
+                    break;
+                case 'get_room_list_request':
+                    defaultData = {};
+                    break;
+                default:
+                    return; // Don't change data for custom events
+            }
+            
+            dataTextarea.value = JSON.stringify(defaultData, null, 2);
+        }
+
         function sendCustomMessage() {
             const namespace = document.getElementById('namespace').value;
-            const event = document.getElementById('event').value;
+            const eventSelect = document.getElementById('event');
+            const customEventInput = document.getElementById('customEvent');
             const dataStr = document.getElementById('data').value;
+
+            // Use custom event if selected, otherwise use dropdown value
+            const event = eventSelect.value === 'custom' 
+                ? customEventInput.value.trim() 
+                : eventSelect.value;
+
+            if (!event) {
+                alert('Please select or enter an event name!');
+                return;
+            }
 
             try {
                 const data = JSON.parse(dataStr);
