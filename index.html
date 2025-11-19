@@ -543,12 +543,14 @@
 
                 <div class="form-group">
                     <label for="serverUrl">Server URL</label>
-                    <input type="text" id="serverUrl" value=""
-                        placeholder="ws://localhost:3003/ws">
+                    <input type="text" id="serverUrl" value="" placeholder="ws://localhost:3003/ws">
                 </div>
 
-                <div style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
-                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">🔐 Auto Fill Access Token</h3>
+                <div
+                    style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3
+                        style="margin-top: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                        🔐 Auto Fill Access Token</h3>
                     <div class="form-group" style="margin-bottom: 12px;">
                         <label for="loginUsername">Username</label>
                         <input type="text" id="loginUsername" placeholder="john_doe" value="john_doe">
@@ -562,7 +564,8 @@
                             <input type="checkbox" id="rememberMe" checked> Remember me
                         </label>
                     </div>
-                    <button onclick="autoFillAccessToken()" id="autoFillBtn" style="width: 100%; margin: 0;" class="success">
+                    <button onclick="autoFillAccessToken()" id="autoFillBtn" style="width: 100%; margin: 0;"
+                        class="success">
                         🔑 Auto Fill Access Token
                     </button>
                     <div id="autoFillStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
@@ -630,7 +633,8 @@
                 </div>
 
                 <div class="form-group" id="joinPasswordGroup">
-                    <label for="joinPassword">Password (4 digits) <span style="color: var(--text-tertiary); font-size: 11px;">(Optional
+                    <label for="joinPassword">Password (4 digits) <span
+                            style="color: var(--text-tertiary); font-size: 11px;">(Optional
                             - required for private rooms)</span></label>
                     <input type="number" id="joinPassword" placeholder="1234" min="1000" max="9999">
                     <small>Required for private rooms. Leave empty for public
@@ -700,13 +704,13 @@
 
     <!-- Load Configuration -->
     <script src="config.js"></script>
-    
+
     <script>
         let ws = null;
         let isConnected = false;
 
         // Initialize UI with config values
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // Set default WebSocket server URL from config
             const serverUrlInput = document.getElementById('serverUrl');
             if (window.CONFIG && window.CONFIG.WEB_SOCKET_SERVER) {
@@ -761,7 +765,7 @@
             try {
                 const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
                 const loginEndpoint = window.CONFIG?.LOGIN_ENDPOINT || '/iam/login';
-                
+
                 // Try login endpoint from config first, then common endpoints
                 const endpoints = [
                     `${baseApi}${loginEndpoint}`,
@@ -792,23 +796,23 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            
+
                             // Try different possible response formats
-                            accessToken = data.access_token || 
-                                         data.accessToken || 
-                                         data.token || 
-                                         data.data?.access_token ||
-                                         data.data?.token;
+                            accessToken = data.access_token ||
+                                data.accessToken ||
+                                data.token ||
+                                data.data?.access_token ||
+                                data.data?.token;
 
                             if (accessToken) {
                                 // Fill JWT token field
                                 document.getElementById('jwtToken').value = accessToken;
-                                
+
                                 // Show success message
                                 statusDiv.style.display = 'block';
                                 statusDiv.style.color = 'var(--success)';
                                 statusDiv.textContent = '✅ Access token retrieved successfully!';
-                                
+
                                 // Add success message to messages panel
                                 addMessage('received', {
                                     type: 'success',
@@ -1091,7 +1095,7 @@
                 if (includeIdentityKey && !message.identity_key) {
                     message.identity_key = generateIdentityKey();
                 }
-                
+
                 const messageStr = JSON.stringify(message);
                 ws.send(messageStr);
                 addMessage('sent', message);
