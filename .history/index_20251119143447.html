@@ -1,0 +1,1697 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Ludo Backend</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --danger-dark: #dc2626;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --border: #e2e8f0;
+            --border-dark: #cbd5e1;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px;
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 32px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header h1 {
+            margin-bottom: 8px;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 24px;
+            background: var(--bg-secondary);
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .panel:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .panel h2 {
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border);
+            position: relative;
+        }
+
+        .panel h2::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 13px;
+            letter-spacing: -0.2px;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        input:hover,
+        textarea:hover,
+        select:hover {
+            border-color: var(--border-dark);
+        }
+
+        textarea {
+            min-height: 100px;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+            cursor: pointer;
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-wrapper input {
+            padding-right: 45px;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: var(--text-tertiary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            margin: 0;
+            width: auto;
+            box-shadow: none;
+        }
+
+        .password-toggle:hover {
+            color: var(--text-primary);
+            background: none;
+            transform: translateY(-50%);
+            box-shadow: none;
+        }
+
+        .password-toggle:active {
+            transform: translateY(-50%);
+        }
+
+        .password-toggle:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        small {
+            display: block;
+            margin-top: 6px;
+            color: var(--text-tertiary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:disabled::before {
+            display: none;
+        }
+
+        button.danger {
+            background: var(--danger);
+        }
+
+        button.danger:hover {
+            background: var(--danger-dark);
+        }
+
+        button.success {
+            background: var(--success);
+        }
+
+        button.success:hover {
+            background: var(--success-dark);
+        }
+
+        .status {
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+
+        .status.connected {
+            background: #d1fae5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+
+        .status.connected::before {
+            background: var(--success);
+        }
+
+        .status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .status.disconnected::before {
+            background: var(--danger);
+        }
+
+        .status.connecting {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+
+        .status.connecting::before {
+            background: var(--warning);
+        }
+
+        .messages {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: var(--radius-lg);
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Courier New', monospace;
+            font-size: 12px;
+            border: 1px solid #334155;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .messages::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            padding: 12px;
+            border-radius: var(--radius);
+            border-left: 4px solid;
+            transition: all 0.2s ease;
+            word-break: break-word;
+        }
+
+        .message:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .message.sent {
+            background: #1e3a8a;
+            border-left-color: var(--success);
+            color: #bfdbfe;
+        }
+
+        .message.received {
+            background: #1e40af;
+            border-left-color: var(--info);
+            color: #bfdbfe;
+        }
+
+        .message.error {
+            background: #7f1d1d;
+            border-left-color: var(--danger);
+            color: #fca5a5;
+        }
+
+        .message.broadcast {
+            background: #78350f;
+            border-left-color: var(--warning);
+            color: #fcd34d;
+        }
+
+        .message pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .timestamp {
+            color: var(--text-tertiary);
+            font-size: 10px;
+            margin-right: 10px;
+            opacity: 0.7;
+            font-weight: 500;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quick-actions button {
+            flex: 1;
+            min-width: 120px;
+            margin: 0;
+        }
+
+        .info-box {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            font-size: 12px;
+            border: 1px solid #fde68a;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .info-box code {
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 11px;
+        }
+
+        .user-info-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e3a8a;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            font-size: 13px;
+            border: 1px solid #93c5fd;
+            font-weight: 500;
+        }
+
+        .room-info-box {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+        }
+
+        .room-info-box h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .room-info-box div {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .room-info-box div:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .room-info-box span {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .panel {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 WebSocket Test Client</h1>
+            <p>Test Ludo Backend WebSocket API</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Panel: Connection & Actions -->
+            <div class="panel">
+                <h2>🔌 Connection</h2>
+
+                <div class="form-group">
+                    <label for="serverUrl">Server URL</label>
+                    <input type="text" id="serverUrl" value="" placeholder="ws://localhost:3003/ws">
+                </div>
+
+                <div
+                    style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3
+                        style="margin-top: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                        🔐 Auto Fill Access Token</h3>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="loginUsername">Username</label>
+                        <select id="loginUsername">
+                            <option value="john_doe1">john_doe1</option>
+                            <option value="john_doe2">john_doe2</option>
+                            <option value="john_doe3">john_doe3</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="loginPassword">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="loginPassword" placeholder="Secret@123" value="Secret@123">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label>
+                            <input type="checkbox" id="rememberMe" checked> Remember me
+                        </label>
+                    </div>
+                    <button onclick="autoFillAccessToken()" id="autoFillBtn" style="width: 100%; margin: 0;"
+                        class="success">
+                        🔑 Auto Fill Access Token
+                    </button>
+                    <div id="autoFillStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="jwtToken">JWT Token</label>
+                    <textarea id="jwtToken" placeholder="Paste your JWT token here..."></textarea>
+                    <small>
+                        💡 Tip: Open multiple tabs (or incognito) to test multiple users. Each tab can use a different
+                        JWT token.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <button onclick="createWallet()" id="createWalletBtn" class="success" style="width: 100%; margin: 0;">
+                        💰 Create Wallet
+                    </button>
+                    <div id="createWalletStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                        💵 Deposit</h3>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositAmount">Amount *</label>
+                        <input type="number" id="depositAmount" placeholder="1" value="1" min="0" step="0.01">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositUserId">User ID <span style="color: var(--text-tertiary); font-size: 11px;">(Optional)</span></label>
+                        <input type="text" id="depositUserId" placeholder="Leave empty to use token user_id">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositReferenceId">Reference ID <span style="color: var(--text-tertiary); font-size: 11px;">(Optional)</span></label>
+                        <input type="text" id="depositReferenceId" placeholder="string">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositMetadata">Metadata <span style="color: var(--text-tertiary); font-size: 11px;">(Optional - JSON)</span></label>
+                        <textarea id="depositMetadata" placeholder='{"additionalProp1": {}}' style="min-height: 60px; font-size: 12px;">{}</textarea>
+                    </div>
+                    <button onclick="deposit()" id="depositBtn" class="success" style="width: 100%; margin: 0;">
+                        💵 Deposit
+                    </button>
+                    <div id="depositStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+                </div>
+
+                <div id="userInfo" class="user-info-box" style="display: none;">
+                    <strong>👤 User:</strong> <span id="userId">-</span> | <span id="username">-</span>
+                </div>
+
+                <div id="status" class="status disconnected">Disconnected</div>
+
+                <div class="info-box">
+                    <strong>⚠️ Troubleshooting:</strong>
+                    • Server must be running: <code>make dev</code><br>
+                    • Check browser console (F12) for errors<br>
+                    • Verify JWT token is valid (not expired)<br>
+                    • Ensure server URL is correct
+                </div>
+
+                <div class="quick-actions">
+                    <button id="connectBtn" onclick="connect()">Connect</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled class="danger">Disconnect</button>
+                </div>
+
+                <h2 style="margin-top: 32px;">⚡ Quick Actions</h2>
+
+                <div class="form-group">
+                    <label for="maxPlayers">Max Players</label>
+                    <input type="number" id="maxPlayers" value="4" min="2" max="8">
+                </div>
+
+                <div class="form-group">
+                    <label for="betValue">Bet Value</label>
+                    <input type="number" id="betValue" value="1000" min="1">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isPublic" checked> Public Room
+                    </label>
+                </div>
+
+                <div class="form-group" id="passwordGroup" style="display: none;">
+                    <label for="password">Password (4 digits)</label>
+                    <input type="number" id="password" placeholder="1234" min="1000" max="9999">
+                </div>
+
+                <div class="quick-actions">
+                    <button onclick="createRoom()" id="createBtn" disabled class="success">Create Room</button>
+                    <button onclick="createPrivateRoom()" id="createPrivateBtn" disabled>Create Private Room</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 24px;">
+                    <label for="roomId">Room ID (to join)</label>
+                    <input type="text" id="roomId" placeholder="Paste room_id here">
+                </div>
+
+                <div class="form-group" id="joinPasswordGroup">
+                    <label for="joinPassword">Password (4 digits) <span
+                            style="color: var(--text-tertiary); font-size: 11px;">(Optional
+                            - required for private rooms)</span></label>
+                    <input type="number" id="joinPassword" placeholder="1234" min="1000" max="9999">
+                    <small>Required for private rooms. Leave empty for public
+                        rooms.</small>
+                </div>
+
+                <div class="quick-actions">
+                    <button onclick="joinRoom()" id="joinBtn" disabled>Join Room</button>
+                    <button onclick="leaveRoom()" id="leaveBtn" disabled class="danger">Leave Room</button>
+                    <button onclick="getRoomList()" id="getRoomListBtn" disabled>Get Room List</button>
+                </div>
+
+                <div class="room-info-box">
+                    <h3>🏠 Room Info</h3>
+                    <div id="roomInfo">
+                        <div>Room ID: <span id="roomInfoId">-</span></div>
+                        <div>Players: <span id="roomInfoPlayers">-</span> / <span id="roomInfoMaxPlayers">-</span></div>
+                        <div>Status: <span id="roomInfoStatus">-</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Messages & Custom JSON -->
+            <div class="panel">
+                <h2>📨 Messages</h2>
+
+                <div class="quick-actions">
+                    <button onclick="clearMessages()" class="danger">Clear</button>
+                    <button onclick="testInvalidNamespace()" id="testBtn" disabled>Test Error</button>
+                </div>
+
+                <div id="messages" class="messages">
+                    <div class="message">
+                        <span class="timestamp">[Ready]</span>
+                        <span>Enter JWT token and click Connect to start</span>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 32px;">📝 Send Custom Message</h2>
+
+                <div class="form-group">
+                    <label for="namespace">Namespace</label>
+                    <input type="text" id="namespace" value="room" placeholder="room">
+                </div>
+
+                <div class="form-group">
+                    <label for="event">Event</label>
+                    <select id="event" onchange="handleEventChange()">
+                        <option value="create_room_request">create_room_request</option>
+                        <option value="join_room_request">join_room_request</option>
+                        <option value="leave_room_request">leave_room_request</option>
+                        <option value="get_room_list_request">get_room_list_request</option>
+                        <option value="custom">Custom Event...</option>
+                    </select>
+                    <input type="text" id="customEvent" style="display: none; margin-top: 8px;" class="form-group" placeholder="Enter custom event name">
+                </div>
+
+                <div class="form-group">
+                    <label for="data">Data (JSON)</label>
+                    <textarea id="data" placeholder='{"max_players": 4, "is_public": true, "bet_value": 1000}'>{
+  "max_players": 4,
+  "is_public": true,
+  "bet_value": 1000
+}</textarea>
+                    <small>
+                        💡 Note: identity_key will be automatically generated for requests unless already provided.
+                    </small>
+                </div>
+
+                <button onclick="sendCustomMessage()" id="sendBtn" disabled>Send Message</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Configuration -->
+    <script src="config.js"></script>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+
+        // Initialize UI with config values
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set default WebSocket server URL from config
+            const serverUrlInput = document.getElementById('serverUrl');
+            if (window.CONFIG && window.CONFIG.WEB_SOCKET_SERVER) {
+                serverUrlInput.value = window.CONFIG.WEB_SOCKET_SERVER;
+            }
+        });
+
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleBtn = passwordInput.parentElement.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+
+        // Update password field visibility
+        document.getElementById('isPublic').addEventListener('change', function () {
+            document.getElementById('passwordGroup').style.display = this.checked ? 'none' : 'block';
+        });
+
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = message;
+        }
+
+        function updateButtons() {
+            document.getElementById('connectBtn').disabled = isConnected;
+            document.getElementById('disconnectBtn').disabled = !isConnected;
+            document.getElementById('createBtn').disabled = !isConnected;
+            document.getElementById('createPrivateBtn').disabled = !isConnected;
+            document.getElementById('joinBtn').disabled = !isConnected;
+            document.getElementById('getRoomListBtn').disabled = !isConnected;
+            document.getElementById('sendBtn').disabled = !isConnected;
+            document.getElementById('testBtn').disabled = !isConnected;
+        }
+
+        // Auto fill access token from login API
+        async function autoFillAccessToken() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const rememberMe = document.getElementById('rememberMe').checked;
+            const statusDiv = document.getElementById('autoFillStatus');
+            const autoFillBtn = document.getElementById('autoFillBtn');
+
+            if (!username || !password) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter username and password';
+                return;
+            }
+
+            // Disable button and show loading
+            autoFillBtn.disabled = true;
+            autoFillBtn.textContent = '⏳ Loading...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = 'var(--info)';
+            statusDiv.textContent = '🔄 Logging in...';
+
+            try {
+                const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
+                const loginEndpoint = window.CONFIG?.LOGIN_ENDPOINT || '/iam/login';
+
+                // Try login endpoint from config first, then common endpoints
+                const endpoints = [
+                    `${baseApi}${loginEndpoint}`,
+                    `${baseApi}/iam/login`,
+                    `${baseApi}/api/auth/login`,
+                    `${baseApi}/auth/login`,
+                    `${baseApi}/api/login`,
+                    `${baseApi}/login`
+                ];
+
+                let loginSuccess = false;
+                let accessToken = null;
+
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'accept': 'application/json',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                username: username,
+                                password: password,
+                                remember_me: rememberMe
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+
+                            // Try different possible response formats
+                            accessToken = data.access_token ||
+                                data.accessToken ||
+                                data.token ||
+                                data.data?.access_token ||
+                                data.data?.token;
+
+                            if (accessToken) {
+                                // Fill JWT token field
+                                document.getElementById('jwtToken').value = accessToken;
+
+                                // Show success message
+                                statusDiv.style.display = 'block';
+                                statusDiv.style.color = 'var(--success)';
+                                statusDiv.textContent = '✅ Access token retrieved successfully!';
+
+                                // Add success message to messages panel
+                                addMessage('received', {
+                                    type: 'success',
+                                    message: 'Auto-filled access token from login',
+                                    endpoint: endpoint,
+                                    username: username
+                                });
+
+                                // Try to parse and display user info from token
+                                try {
+                                    const tokenParts = accessToken.split('.');
+                                    if (tokenParts.length === 3) {
+                                        const payload = JSON.parse(atob(tokenParts[1]));
+                                        document.getElementById('userId').textContent = payload.user_id || payload.sub || payload.id || 'N/A';
+                                        document.getElementById('username').textContent = payload.username || payload.name || username;
+                                        document.getElementById('userInfo').style.display = 'block';
+                                    }
+                                } catch (e) {
+                                    console.log('Could not parse JWT token for user info:', e);
+                                }
+
+                                loginSuccess = true;
+                                break;
+                            }
+                        }
+                    } catch (err) {
+                        // Continue to next endpoint
+                        console.log(`Failed endpoint ${endpoint}:`, err);
+                        continue;
+                    }
+                }
+
+                if (!loginSuccess) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = '❌ Login failed. Please check credentials and API endpoint.';
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'Auto-fill access token failed',
+                        error: 'Could not find valid login endpoint or invalid credentials'
+                    });
+                }
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                addMessage('error', {
+                    type: 'error',
+                    message: 'Auto-fill access token error',
+                    error: error.message
+                });
+            } finally {
+                // Re-enable button
+                autoFillBtn.disabled = false;
+                autoFillBtn.textContent = '🔑 Auto Fill Access Token';
+            }
+        }
+
+        // Create wallet for user
+        async function createWallet() {
+            const token = document.getElementById('jwtToken').value.trim();
+            const statusDiv = document.getElementById('createWalletStatus');
+            const createWalletBtn = document.getElementById('createWalletBtn');
+
+            if (!token) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter JWT token first!';
+                return;
+            }
+
+            // Disable button and show loading
+            createWalletBtn.disabled = true;
+            createWalletBtn.textContent = '⏳ Creating...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = 'var(--info)';
+            statusDiv.textContent = '🔄 Creating wallet...';
+
+            try {
+                const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
+                const endpoint = `${baseApi}/wallet/create-user-balance`;
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: ''
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show success message
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--success)';
+                    statusDiv.textContent = '✅ Wallet created successfully!';
+                    
+                    // Add success message to messages panel
+                    addMessage('received', {
+                        type: 'success',
+                        message: 'Wallet created successfully',
+                        endpoint: endpoint,
+                        data: data
+                    });
+                } else {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = `❌ Failed to create wallet: ${errorData.message || response.statusText}`;
+                    
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'Create wallet failed',
+                        endpoint: endpoint,
+                        status: response.status,
+                        error: errorData
+                    });
+                }
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                
+                addMessage('error', {
+                    type: 'error',
+                    message: 'Create wallet error',
+                    error: error.message
+                });
+            } finally {
+                // Re-enable button
+                createWalletBtn.disabled = false;
+                createWalletBtn.textContent = '💰 Create Wallet';
+            }
+        }
+
+        // Deposit to wallet
+        async function deposit() {
+            const token = document.getElementById('jwtToken').value.trim();
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const userId = document.getElementById('depositUserId').value.trim();
+            const referenceId = document.getElementById('depositReferenceId').value.trim();
+            const metadataStr = document.getElementById('depositMetadata').value.trim();
+            const statusDiv = document.getElementById('depositStatus');
+            const depositBtn = document.getElementById('depositBtn');
+
+            if (!token) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter JWT token first!';
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter a valid amount!';
+                return;
+            }
+
+            // Parse metadata JSON
+            let metadata = {};
+            if (metadataStr) {
+                try {
+                    metadata = JSON.parse(metadataStr);
+                } catch (e) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = '❌ Invalid JSON in Metadata field: ' + e.message;
+                    return;
+                }
+            }
+
+            // If userId not provided, try to get from JWT token
+            let finalUserId = userId;
+            if (!finalUserId) {
+                try {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        finalUserId = payload.user_id || payload.sub || payload.id || '';
+                    }
+                } catch (e) {
+                    console.log('Could not parse JWT token for user_id:', e);
+                }
+            }
+
+            // Disable button and show loading
+            depositBtn.disabled = true;
+            depositBtn.textContent = '⏳ Processing...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = 'var(--info)';
+            statusDiv.textContent = '🔄 Processing deposit...';
+
+            try {
+                const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
+                const endpoint = `${baseApi}/wallet/credit`;
+
+                const requestBody = {
+                    amount: amount,
+                    metadata: metadata,
+                    reference_id: referenceId || 'string',
+                    user_id: finalUserId || 'string'
+                };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show success message
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--success)';
+                    statusDiv.textContent = `✅ Deposit successful! Amount: ${amount}`;
+                    
+                    // Add success message to messages panel
+                    addMessage('received', {
+                        type: 'success',
+                        message: 'Deposit successful',
+                        endpoint: endpoint,
+                        request: requestBody,
+                        response: data
+                    });
+                } else {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = `❌ Failed to deposit: ${errorData.message || response.statusText}`;
+                    
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'Deposit failed',
+                        endpoint: endpoint,
+                        status: response.status,
+                        request: requestBody,
+                        error: errorData
+                    });
+                }
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                
+                addMessage('error', {
+                    type: 'error',
+                    message: 'Deposit error',
+                    error: error.message
+                });
+            } finally {
+                // Re-enable button
+                depositBtn.disabled = false;
+                depositBtn.textContent = '💵 Deposit';
+            }
+        }
+
+        // Generate unique identity key for request tracking
+        function generateIdentityKey() {
+            return 'req-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function addMessage(type, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <pre>${JSON.stringify(content, null, 2)}</pre>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+
+        async function connect() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const token = document.getElementById('jwtToken').value.trim();
+
+            if (!token) {
+                alert('Please enter JWT token!');
+                return;
+            }
+
+            // Validate server URL format
+            if (!serverUrl.startsWith('ws://') && !serverUrl.startsWith('wss://')) {
+                alert('Server URL must start with ws:// or wss://');
+                return;
+            }
+
+            updateStatus('connecting', 'Connecting...');
+            addMessage('received', { type: 'system', message: 'Attempting to connect to ' + serverUrl });
+
+            try {
+                // Browser WebSocket API doesn't support custom headers
+                // So we pass token via query parameter
+                const urlWithToken = serverUrl + (serverUrl.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+                console.log('Connecting to:', urlWithToken.replace(token, 'TOKEN_HIDDEN'));
+                ws = new WebSocket(urlWithToken);
+
+                ws.onopen = function () {
+                    isConnected = true;
+                    updateStatus('connected', '✅ Connected');
+                    updateButtons();
+                    addMessage('received', { type: 'system', message: '✅ Successfully connected to WebSocket server' });
+
+                    // Parse and display user info from JWT token
+                    try {
+                        const tokenParts = token.split('.');
+                        if (tokenParts.length === 3) {
+                            const payload = JSON.parse(atob(tokenParts[1]));
+                            document.getElementById('userId').textContent = payload.user_id || payload.sub || 'N/A';
+                            document.getElementById('username').textContent = payload.username || payload.name || 'N/A';
+                            document.getElementById('userInfo').style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.log('Could not parse JWT token for user info:', e);
+                    }
+                    console.log('WebSocket connected successfully');
+                };
+
+                ws.onmessage = function (event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'error') {
+                            addMessage('error', data);
+                        } else if (data.event === 'user_joined') {
+                            // Handle user_joined broadcast - update UI
+                            addMessage('broadcast', data);
+                            // Update room info if we have the data
+                            if (data.data && data.data.room_id) {
+                                updateRoomInfoFromBroadcast(data.data);
+                            }
+                        } else if (data.event === 'user_left') {
+                            // Handle user_left broadcast - update UI
+                            addMessage('broadcast', data);
+                            // Update room info if we have the data
+                            if (data.data && data.data.room_id) {
+                                updateRoomInfoFromBroadcast(data.data);
+                            }
+                        } else if (data.event && data.event.includes('broadcast')) {
+                            addMessage('broadcast', data);
+                        } else {
+                            addMessage('received', data);
+
+                            // Auto-fill room_id if we get a room creation response
+                            if (data.event === 'create_room_response' && data.type === 'success' && data.data && data.data.id) {
+                                document.getElementById('roomId').value = data.data.id;
+                                updateRoomInfo(data.data);
+                                // Clear password field when auto-filling room ID
+                                // User can enter password if needed for private room
+                                document.getElementById('joinPassword').value = '';
+                                // Highlight password field if room is private
+                                if (!data.data.is_public) {
+                                    document.getElementById('joinPassword').placeholder = 'Password required (4 digits)';
+                                    document.getElementById('joinPassword').style.borderColor = '#f39c12';
+                                } else {
+                                    document.getElementById('joinPassword').placeholder = '1234 (not needed for public room)';
+                                    document.getElementById('joinPassword').style.borderColor = '';
+                                }
+                            }
+
+                            // Update room info when joining room
+                            if (data.event === 'join_room_response' && data.type === 'success' && data.data) {
+                                updateRoomInfo(data.data);
+                                // Enable leave button after joining
+                                document.getElementById('leaveBtn').disabled = false;
+                            }
+
+                            // Handle leave room success
+                            if (data.event === 'leave_room_response' && data.type === 'success') {
+                                // Clear room info and disable leave button
+                                document.getElementById('roomInfoId').textContent = '-';
+                                document.getElementById('roomInfoPlayers').textContent = '-';
+                                document.getElementById('roomInfoMaxPlayers').textContent = '-';
+                                document.getElementById('roomInfoStatus').textContent = '-';
+                                document.getElementById('leaveBtn').disabled = true;
+                                // Clear room ID input
+                                document.getElementById('roomId').value = '';
+                            }
+
+                            // Handle get room list response
+                            if (data.event === 'get_room_list_response' && data.type === 'success' && data.data) {
+                                if (data.data.rooms && data.data.rooms.length > 0) {
+                                    addMessage('received', {
+                                        type: 'info',
+                                        message: `Found ${data.data.count} room(s)`,
+                                        rooms: data.data.rooms
+                                    });
+                                } else {
+                                    addMessage('received', {
+                                        type: 'info',
+                                        message: 'No open rooms available'
+                                    });
+                                }
+                            }
+
+                            // Handle user_left broadcast
+                            if (data.event === 'user_left' && data.data) {
+                                // Update room info from broadcast
+                                if (data.data.room_id) {
+                                    updateRoomInfoFromBroadcast(data.data);
+                                }
+                            }
+
+                            // Handle join room errors - password field is always visible now
+                            if (data.event === 'join_room_response' && data.type === 'error') {
+                                if (data.error && data.error.message && data.error.message.includes('password')) {
+                                    // Highlight password field if password error
+                                    document.getElementById('joinPassword').style.borderColor = '#e74c3c';
+                                    setTimeout(() => {
+                                        document.getElementById('joinPassword').style.borderColor = '';
+                                    }, 3000);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        addMessage('received', { raw: event.data });
+                    }
+                };
+
+                ws.onerror = function (error) {
+                    updateStatus('disconnected', '❌ Connection Error');
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'WebSocket error occurred',
+                        details: 'Check browser console (F12) for details. Make sure server is running and token is valid.'
+                    });
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = function (event) {
+                    isConnected = false;
+                    updateStatus('disconnected', '❌ Disconnected');
+                    updateButtons();
+
+                    let closeMessage = 'Disconnected from server';
+                    if (event.code !== 1000) {
+                        closeMessage += ` (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`;
+
+                        // Common close codes
+                        if (event.code === 1006) {
+                            closeMessage += ' - Connection closed abnormally. Check if server is running.';
+                        } else if (event.code === 1002) {
+                            closeMessage += ' - Protocol error. Check server logs.';
+                        } else if (event.code === 1008) {
+                            closeMessage += ' - Policy violation. Check authentication.';
+                        }
+                    }
+
+                    addMessage('received', { type: 'system', message: closeMessage, code: event.code });
+                    console.log('WebSocket closed:', event.code, event.reason);
+                };
+
+            } catch (error) {
+                updateStatus('disconnected', '❌ Connection Failed');
+                addMessage('error', { type: 'error', message: error.message });
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage(message, includeIdentityKey = true) {
+            if (!ws || !isConnected) {
+                alert('Not connected! Please connect first.');
+                return;
+            }
+
+            try {
+                // Add identity_key if not present and includeIdentityKey is true
+                if (includeIdentityKey && !message.identity_key) {
+                    message.identity_key = generateIdentityKey();
+                }
+
+                const messageStr = JSON.stringify(message);
+                ws.send(messageStr);
+                addMessage('sent', message);
+            } catch (error) {
+                addMessage('error', { type: 'error', message: error.message });
+            }
+        }
+
+        function createRoom() {
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const betValue = parseInt(document.getElementById('betValue').value);
+            const isPublic = document.getElementById('isPublic').checked;
+
+            const message = {
+                namespace: 'room',
+                event: 'create_room_request',
+                data: {
+                    max_players: maxPlayers,
+                    is_public: isPublic,
+                    bet_value: betValue
+                }
+            };
+
+            // If private room (isPublic = false), require password
+            if (!isPublic) {
+                const passwordInput = document.getElementById('password');
+                const password = passwordInput ? parseInt(passwordInput.value) : null;
+
+                if (!password || password < 1000 || password > 9999) {
+                    alert('Password is required for private room. Password must be 4 digits (1000-9999)');
+                    return;
+                }
+
+                message.data.password = password;
+            }
+
+            sendMessage(message);
+        }
+
+        function createPrivateRoom() {
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const betValue = parseInt(document.getElementById('betValue').value);
+            const password = parseInt(document.getElementById('password').value);
+
+            if (!password || password < 1000 || password > 9999) {
+                alert('Password must be 4 digits (1000-9999)');
+                return;
+            }
+
+            const message = {
+                namespace: 'room',
+                event: 'create_room_request',
+                data: {
+                    max_players: maxPlayers,
+                    is_public: false,
+                    password: password,
+                    bet_value: betValue
+                }
+            };
+
+            sendMessage(message);
+        }
+
+        function leaveRoom() {
+            const roomId = document.getElementById('roomId').value.trim();
+
+            if (!roomId) {
+                alert('Please enter Room ID!');
+                return;
+            }
+
+            const message = {
+                namespace: 'room',
+                event: 'leave_room_request',
+                data: {
+                    room_id: roomId
+                }
+            };
+
+            sendMessage(message);
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value.trim();
+
+            if (!roomId) {
+                alert('Please enter Room ID!');
+                return;
+            }
+
+            const passwordInput = document.getElementById('joinPassword');
+            const password = passwordInput.value.trim();
+
+            const message = {
+                namespace: 'room',
+                event: 'join_room_request',
+                data: {
+                    room_id: roomId
+                }
+            };
+
+            // Add password if provided (for private rooms)
+            if (password) {
+                const passwordNum = parseInt(password);
+                if (passwordNum < 1000 || passwordNum > 9999) {
+                    alert('Password must be 4 digits (1000-9999)');
+                    return;
+                }
+                message.data.password = passwordNum;
+            }
+
+            sendMessage(message);
+        }
+
+        function getRoomList() {
+            const message = {
+                namespace: 'room',
+                event: 'get_room_list_request',
+                data: {}
+            };
+
+            sendMessage(message);
+        }
+
+        function handleEventChange() {
+            const eventSelect = document.getElementById('event');
+            const customEventInput = document.getElementById('customEvent');
+            const dataTextarea = document.getElementById('data');
+            
+            if (eventSelect.value === 'custom') {
+                customEventInput.style.display = 'block';
+                customEventInput.value = '';
+                customEventInput.focus();
+            } else {
+                customEventInput.style.display = 'none';
+                // Update default data based on selected event
+                updateDefaultData(eventSelect.value);
+            }
+        }
+
+        function updateDefaultData(eventName) {
+            const dataTextarea = document.getElementById('data');
+            let defaultData = {};
+            
+            switch(eventName) {
+                case 'create_room_request':
+                    defaultData = {
+                        "max_players": 4,
+                        "is_public": true,
+                        "bet_value": 1000
+                    };
+                    break;
+                case 'join_room_request':
+                    defaultData = {
+                        "room_id": ""
+                    };
+                    break;
+                case 'leave_room_request':
+                    defaultData = {
+                        "room_id": ""
+                    };
+                    break;
+                case 'get_room_list_request':
+                    defaultData = {};
+                    break;
+                default:
+                    return; // Don't change data for custom events
+            }
+            
+            dataTextarea.value = JSON.stringify(defaultData, null, 2);
+        }
+
+        function sendCustomMessage() {
+            const namespace = document.getElementById('namespace').value;
+            const eventSelect = document.getElementById('event');
+            const customEventInput = document.getElementById('customEvent');
+            const dataStr = document.getElementById('data').value;
+
+            // Use custom event if selected, otherwise use dropdown value
+            const event = eventSelect.value === 'custom' 
+                ? customEventInput.value.trim() 
+                : eventSelect.value;
+
+            if (!event) {
+                alert('Please select or enter an event name!');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(dataStr);
+                const message = {
+                    namespace: namespace,
+                    event: event,
+                    data: data
+                };
+                // Allow user to control identity_key in custom messages
+                sendMessage(message, true);
+            } catch (error) {
+                alert('Invalid JSON in Data field: ' + error.message);
+            }
+        }
+
+        function testInvalidNamespace() {
+            const message = {
+                namespace: 'invalid',
+                event: 'test',
+                data: {}
+            };
+            // Don't add identity_key for test error messages
+            sendMessage(message, false);
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Update room info display from create_room or join_room response
+        function updateRoomInfo(roomData) {
+            if (!roomData) return;
+
+            if (roomData.id) {
+                document.getElementById('roomInfoId').textContent = roomData.id.substring(0, 8) + '...';
+                document.getElementById('roomInfoId').title = roomData.id;
+            }
+
+            if (roomData.current_players !== undefined && roomData.max_players !== undefined) {
+                document.getElementById('roomInfoPlayers').textContent = roomData.current_players;
+                document.getElementById('roomInfoMaxPlayers').textContent = roomData.max_players;
+
+                // Color code based on room capacity
+                const playersEl = document.getElementById('roomInfoPlayers');
+                if (roomData.current_players >= roomData.max_players) {
+                    playersEl.style.color = '#e74c3c'; // Red when full
+                } else if (roomData.current_players > 0) {
+                    playersEl.style.color = '#f39c12'; // Orange when has players
+                } else {
+                    playersEl.style.color = '#95a5a6'; // Gray when empty
+                }
+            }
+
+            if (roomData.is_active !== undefined) {
+                const statusEl = document.getElementById('roomInfoStatus');
+                statusEl.textContent = roomData.is_active ? 'Active' : 'Inactive';
+                statusEl.style.color = roomData.is_active ? '#27ae60' : '#e74c3c';
+            }
+        }
+
+        // Update room info from user_joined broadcast
+        function updateRoomInfoFromBroadcast(broadcastData) {
+            if (!broadcastData) return;
+
+            // Update room ID if we don't have it yet
+            if (broadcastData.room_id && !document.getElementById('roomInfoId').textContent.includes('...')) {
+                document.getElementById('roomInfoId').textContent = broadcastData.room_id.substring(0, 8) + '...';
+                document.getElementById('roomInfoId').title = broadcastData.room_id;
+            }
+
+            // Update players count from broadcast
+            if (broadcastData.current_players !== undefined && broadcastData.max_players !== undefined) {
+                document.getElementById('roomInfoPlayers').textContent = broadcastData.current_players;
+                document.getElementById('roomInfoMaxPlayers').textContent = broadcastData.max_players;
+
+                // Color code based on room capacity
+                const playersEl = document.getElementById('roomInfoPlayers');
+                if (broadcastData.current_players >= broadcastData.max_players) {
+                    playersEl.style.color = '#e74c3c'; // Red when full
+                } else if (broadcastData.current_players > 0) {
+                    playersEl.style.color = '#f39c12'; // Orange when has players
+                } else {
+                    playersEl.style.color = '#95a5a6'; // Gray when empty
+                }
+            }
+        }
+
+        // Handle Enter key in JWT token field
+        document.getElementById('jwtToken').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                connect();
+            }
+        });
+    </script>
+</body>
+
+</html>
