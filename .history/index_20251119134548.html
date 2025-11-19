@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Ludo Backend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin-bottom: 10px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: #e74c3c;
+        }
+
+        button.danger:hover {
+            background: #c0392b;
+        }
+
+        button.success {
+            background: #27ae60;
+        }
+
+        button.success:hover {
+            background: #229954;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .messages {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .message.sent {
+            background: #2d2d2d;
+            border-left-color: #27ae60;
+        }
+
+        .message.received {
+            background: #252525;
+            border-left-color: #3498db;
+        }
+
+        .message.error {
+            background: #3d1f1f;
+            border-left-color: #e74c3c;
+            color: #ff6b6b;
+        }
+
+        .message.broadcast {
+            background: #2d2d1f;
+            border-left-color: #f39c12;
+            color: #f1c40f;
+        }
+
+        .timestamp {
+            color: #888;
+            font-size: 10px;
+            margin-right: 10px;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .quick-actions button {
+            flex: 1;
+            min-width: 120px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 WebSocket Test Client</h1>
+            <p>Test Ludo Backend WebSocket API</p>
+        </div>
+
+        <div class="content">
+            <!-- Left Panel: Connection & Actions -->
+            <div class="panel">
+                <h2>🔌 Connection</h2>
+
+                <div class="form-group">
+                    <label for="serverUrl">Server URL</label>
+                    <input type="text" id="serverUrl" value="ws://localhost:3003/ws"
+                        placeholder="ws://localhost:3003/ws">
+                </div>
+
+                <div class="form-group">
+                    <label for="jwtToken">JWT Token</label>
+                    <textarea id="jwtToken" placeholder="Paste your JWT token here..."></textarea>
+                    <small style="color: #666; font-size: 11px;">
+                        💡 Tip: Open multiple tabs (or incognito) to test multiple users. Each tab can use a different
+                        JWT token.
+                    </small>
+                </div>
+
+                <div id="userInfo"
+                    style="background: #e7f3ff; color: #004085; padding: 8px; border-radius: 4px; margin-bottom: 10px; font-size: 12px; display: none;">
+                    <strong>👤 User:</strong> <span id="userId">-</span> | <span id="username">-</span>
+                </div>
+
+                <div id="status" class="status disconnected">Disconnected</div>
+
+                <div
+                    style="background: #fff3cd; color: #856404; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 12px;">
+                    <strong>⚠️ Troubleshooting:</strong><br>
+                    • Server must be running: <code>make dev</code><br>
+                    • Check browser console (F12) for errors<br>
+                    • Verify JWT token is valid (not expired)<br>
+                    • Ensure server URL is correct
+                </div>
+
+                <div class="quick-actions">
+                    <button id="connectBtn" onclick="connect()">Connect</button>
+                    <button id="disconnectBtn" onclick="disconnect()" disabled class="danger">Disconnect</button>
+                </div>
+
+                <h2 style="margin-top: 30px;">⚡ Quick Actions</h2>
+
+                <div class="form-group">
+                    <label for="maxPlayers">Max Players</label>
+                    <input type="number" id="maxPlayers" value="4" min="2" max="8">
+                </div>
+
+                <div class="form-group">
+                    <label for="betValue">Bet Value</label>
+                    <input type="number" id="betValue" value="1000" min="1">
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isPublic" checked> Public Room
+                    </label>
+                </div>
+
+                <div class="form-group" id="passwordGroup" style="display: none;">
+                    <label for="password">Password (4 digits)</label>
+                    <input type="number" id="password" placeholder="1234" min="1000" max="9999">
+                </div>
+
+                <div class="quick-actions">
+                    <button onclick="createRoom()" id="createBtn" disabled class="success">Create Room</button>
+                    <button onclick="createPrivateRoom()" id="createPrivateBtn" disabled>Create Private Room</button>
+                </div>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="roomId">Room ID (to join)</label>
+                    <input type="text" id="roomId" placeholder="Paste room_id here">
+                </div>
+
+                <div class="form-group" id="joinPasswordGroup">
+                    <label for="joinPassword">Password (4 digits) <span style="color: #999; font-size: 11px;">(Optional
+                            - required for private rooms)</span></label>
+                    <input type="number" id="joinPassword" placeholder="1234" min="1000" max="9999">
+                    <small style="color: #666; font-size: 11px;">Required for private rooms. Leave empty for public
+                        rooms.</small>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="joinRoom()" id="joinBtn" disabled>Join Room</button>
+                    <button onclick="leaveRoom()" id="leaveBtn" disabled class="danger">Leave Room</button>
+                    <button onclick="getRoomList()" id="getRoomListBtn" disabled>Get Room List</button>
+                </div>
+
+                <div
+                    style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 6px; border: 1px solid #dee2e6;">
+                    <h3 style="margin-top: 0; margin-bottom: 10px; font-size: 14px;">🏠 Room Info</h3>
+                    <div id="roomInfo" style="font-size: 12px; color: #666;">
+                        <div>Room ID: <span id="roomInfoId">-</span></div>
+                        <div>Players: <span id="roomInfoPlayers">-</span> / <span id="roomInfoMaxPlayers">-</span></div>
+                        <div>Status: <span id="roomInfoStatus">-</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Messages & Custom JSON -->
+            <div class="panel">
+                <h2>📨 Messages</h2>
+
+                <div class="quick-actions">
+                    <button onclick="clearMessages()" class="danger">Clear</button>
+                    <button onclick="testInvalidNamespace()" id="testBtn" disabled>Test Error</button>
+                </div>
+
+                <div id="messages" class="messages">
+                    <div class="message">
+                        <span class="timestamp">[Ready]</span>
+                        <span>Enter JWT token and click Connect to start</span>
+                    </div>
+                </div>
+
+                <h2 style="margin-top: 30px;">📝 Send Custom Message</h2>
+
+                <div class="form-group">
+                    <label for="namespace">Namespace</label>
+                    <input type="text" id="namespace" value="room" placeholder="room">
+                </div>
+
+                <div class="form-group">
+                    <label for="event">Event</label>
+                    <input type="text" id="event" value="create_room_request" placeholder="create_room_request">
+                </div>
+
+                <div class="form-group">
+                    <label for="data">Data (JSON)</label>
+                    <textarea id="data" placeholder='{"max_players": 4, "is_public": true, "bet_value": 1000}'>{
+  "max_players": 4,
+  "is_public": true,
+  "bet_value": 1000
+}</textarea>
+                </div>
+
+                <button onclick="sendCustomMessage()" id="sendBtn" disabled>Send Message</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+
+        // Update password field visibility
+        document.getElementById('isPublic').addEventListener('change', function () {
+            document.getElementById('passwordGroup').style.display = this.checked ? 'none' : 'block';
+        });
+
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = message;
+        }
+
+        function updateButtons() {
+            document.getElementById('connectBtn').disabled = isConnected;
+            document.getElementById('disconnectBtn').disabled = !isConnected;
+            document.getElementById('createBtn').disabled = !isConnected;
+            document.getElementById('createPrivateBtn').disabled = !isConnected;
+            document.getElementById('joinBtn').disabled = !isConnected;
+            document.getElementById('getRoomListBtn').disabled = !isConnected;
+            document.getElementById('sendBtn').disabled = !isConnected;
+            document.getElementById('testBtn').disabled = !isConnected;
+        }
+
+        // Generate unique identity key for request tracking
+        function generateIdentityKey() {
+            return 'req-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function addMessage(type, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <span class="timestamp">[${timestamp}]</span>
+                <pre>${JSON.stringify(content, null, 2)}</pre>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+
+        async function connect() {
+            const serverUrl = document.getElementById('serverUrl').value;
+            const token = document.getElementById('jwtToken').value.trim();
+
+            if (!token) {
+                alert('Please enter JWT token!');
+                return;
+            }
+
+            // Validate server URL format
+            if (!serverUrl.startsWith('ws://') && !serverUrl.startsWith('wss://')) {
+                alert('Server URL must start with ws:// or wss://');
+                return;
+            }
+
+            updateStatus('connecting', 'Connecting...');
+            addMessage('received', { type: 'system', message: 'Attempting to connect to ' + serverUrl });
+
+            try {
+                // Browser WebSocket API doesn't support custom headers
+                // So we pass token via query parameter
+                const urlWithToken = serverUrl + (serverUrl.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+                console.log('Connecting to:', urlWithToken.replace(token, 'TOKEN_HIDDEN'));
+                ws = new WebSocket(urlWithToken);
+
+                ws.onopen = function () {
+                    isConnected = true;
+                    updateStatus('connected', '✅ Connected');
+                    updateButtons();
+                    addMessage('received', { type: 'system', message: '✅ Successfully connected to WebSocket server' });
+
+                    // Parse and display user info from JWT token
+                    try {
+                        const tokenParts = token.split('.');
+                        if (tokenParts.length === 3) {
+                            const payload = JSON.parse(atob(tokenParts[1]));
+                            document.getElementById('userId').textContent = payload.user_id || payload.sub || 'N/A';
+                            document.getElementById('username').textContent = payload.username || payload.name || 'N/A';
+                            document.getElementById('userInfo').style.display = 'block';
+                        }
+                    } catch (e) {
+                        console.log('Could not parse JWT token for user info:', e);
+                    }
+                    console.log('WebSocket connected successfully');
+                };
+
+                ws.onmessage = function (event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'error') {
+                            addMessage('error', data);
+                        } else if (data.event === 'user_joined') {
+                            // Handle user_joined broadcast - update UI
+                            addMessage('broadcast', data);
+                            // Update room info if we have the data
+                            if (data.data && data.data.room_id) {
+                                updateRoomInfoFromBroadcast(data.data);
+                            }
+                        } else if (data.event === 'user_left') {
+                            // Handle user_left broadcast - update UI
+                            addMessage('broadcast', data);
+                            // Update room info if we have the data
+                            if (data.data && data.data.room_id) {
+                                updateRoomInfoFromBroadcast(data.data);
+                            }
+                        } else if (data.event && data.event.includes('broadcast')) {
+                            addMessage('broadcast', data);
+                        } else {
+                            addMessage('received', data);
+
+                            // Auto-fill room_id if we get a room creation response
+                            if (data.event === 'create_room_response' && data.type === 'success' && data.data && data.data.id) {
+                                document.getElementById('roomId').value = data.data.id;
+                                updateRoomInfo(data.data);
+                                // Clear password field when auto-filling room ID
+                                // User can enter password if needed for private room
+                                document.getElementById('joinPassword').value = '';
+                                // Highlight password field if room is private
+                                if (!data.data.is_public) {
+                                    document.getElementById('joinPassword').placeholder = 'Password required (4 digits)';
+                                    document.getElementById('joinPassword').style.borderColor = '#f39c12';
+                                } else {
+                                    document.getElementById('joinPassword').placeholder = '1234 (not needed for public room)';
+                                    document.getElementById('joinPassword').style.borderColor = '';
+                                }
+                            }
+
+                            // Update room info when joining room
+                            if (data.event === 'join_room_response' && data.type === 'success' && data.data) {
+                                updateRoomInfo(data.data);
+                                // Enable leave button after joining
+                                document.getElementById('leaveBtn').disabled = false;
+                            }
+
+                            // Handle leave room success
+                            if (data.event === 'leave_room_response' && data.type === 'success') {
+                                // Clear room info and disable leave button
+                                document.getElementById('roomInfoId').textContent = '-';
+                                document.getElementById('roomInfoPlayers').textContent = '-';
+                                document.getElementById('roomInfoMaxPlayers').textContent = '-';
+                                document.getElementById('roomInfoStatus').textContent = '-';
+                                document.getElementById('leaveBtn').disabled = true;
+                                // Clear room ID input
+                                document.getElementById('roomId').value = '';
+                            }
+
+                            // Handle get room list response
+                            if (data.event === 'get_room_list_response' && data.type === 'success' && data.data) {
+                                if (data.data.rooms && data.data.rooms.length > 0) {
+                                    addMessage('received', {
+                                        type: 'info',
+                                        message: `Found ${data.data.count} room(s)`,
+                                        rooms: data.data.rooms
+                                    });
+                                } else {
+                                    addMessage('received', {
+                                        type: 'info',
+                                        message: 'No open rooms available'
+                                    });
+                                }
+                            }
+
+                            // Handle user_left broadcast
+                            if (data.event === 'user_left' && data.data) {
+                                // Update room info from broadcast
+                                if (data.data.room_id) {
+                                    updateRoomInfoFromBroadcast(data.data);
+                                }
+                            }
+
+                            // Handle join room errors - password field is always visible now
+                            if (data.event === 'join_room_response' && data.type === 'error') {
+                                if (data.error && data.error.message && data.error.message.includes('password')) {
+                                    // Highlight password field if password error
+                                    document.getElementById('joinPassword').style.borderColor = '#e74c3c';
+                                    setTimeout(() => {
+                                        document.getElementById('joinPassword').style.borderColor = '';
+                                    }, 3000);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        addMessage('received', { raw: event.data });
+                    }
+                };
+
+                ws.onerror = function (error) {
+                    updateStatus('disconnected', '❌ Connection Error');
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'WebSocket error occurred',
+                        details: 'Check browser console (F12) for details. Make sure server is running and token is valid.'
+                    });
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = function (event) {
+                    isConnected = false;
+                    updateStatus('disconnected', '❌ Disconnected');
+                    updateButtons();
+
+                    let closeMessage = 'Disconnected from server';
+                    if (event.code !== 1000) {
+                        closeMessage += ` (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`;
+
+                        // Common close codes
+                        if (event.code === 1006) {
+                            closeMessage += ' - Connection closed abnormally. Check if server is running.';
+                        } else if (event.code === 1002) {
+                            closeMessage += ' - Protocol error. Check server logs.';
+                        } else if (event.code === 1008) {
+                            closeMessage += ' - Policy violation. Check authentication.';
+                        }
+                    }
+
+                    addMessage('received', { type: 'system', message: closeMessage, code: event.code });
+                    console.log('WebSocket closed:', event.code, event.reason);
+                };
+
+            } catch (error) {
+                updateStatus('disconnected', '❌ Connection Failed');
+                addMessage('error', { type: 'error', message: error.message });
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage(message, includeIdentityKey = true) {
+            if (!ws || !isConnected) {
+                alert('Not connected! Please connect first.');
+                return;
+            }
+
+            try {
+                // Add identity_key if not present and includeIdentityKey is true
+                if (includeIdentityKey && !message.identity_key) {
+                    message.identity_key = generateIdentityKey();
+                }
+                
+                const messageStr = JSON.stringify(message);
+                ws.send(messageStr);
+                addMessage('sent', message);
+            } catch (error) {
+                addMessage('error', { type: 'error', message: error.message });
+            }
+        }
+
+        function createRoom() {
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const betValue = parseInt(document.getElementById('betValue').value);
+            const isPublic = document.getElementById('isPublic').checked;
+
+            const message = {
+                namespace: 'room',
+                event: 'create_room_request',
+                data: {
+                    max_players: maxPlayers,
+                    is_public: isPublic,
+                    bet_value: betValue
+                }
+            };
+
+            // If private room (isPublic = false), require password
+            if (!isPublic) {
+                const passwordInput = document.getElementById('password');
+                const password = passwordInput ? parseInt(passwordInput.value) : null;
+
+                if (!password || password < 1000 || password > 9999) {
+                    alert('Password is required for private room. Password must be 4 digits (1000-9999)');
+                    return;
+                }
+
+                message.data.password = password;
+            }
+
+            sendMessage(message);
+        }
+
+        function createPrivateRoom() {
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const betValue = parseInt(document.getElementById('betValue').value);
+            const password = parseInt(document.getElementById('password').value);
+
+            if (!password || password < 1000 || password > 9999) {
+                alert('Password must be 4 digits (1000-9999)');
+                return;
+            }
+
+            const message = {
+                namespace: 'room',
+                event: 'create_room_request',
+                data: {
+                    max_players: maxPlayers,
+                    is_public: false,
+                    password: password,
+                    bet_value: betValue
+                }
+            };
+
+            sendMessage(message);
+        }
+
+        function leaveRoom() {
+            const roomId = document.getElementById('roomId').value.trim();
+
+            if (!roomId) {
+                alert('Please enter Room ID!');
+                return;
+            }
+
+            const message = {
+                namespace: 'room',
+                event: 'leave_room_request',
+                data: {
+                    room_id: roomId
+                }
+            };
+
+            sendMessage(message);
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value.trim();
+
+            if (!roomId) {
+                alert('Please enter Room ID!');
+                return;
+            }
+
+            const passwordInput = document.getElementById('joinPassword');
+            const password = passwordInput.value.trim();
+
+            const message = {
+                namespace: 'room',
+                event: 'join_room_request',
+                data: {
+                    room_id: roomId
+                }
+            };
+
+            // Add password if provided (for private rooms)
+            if (password) {
+                const passwordNum = parseInt(password);
+                if (passwordNum < 1000 || passwordNum > 9999) {
+                    alert('Password must be 4 digits (1000-9999)');
+                    return;
+                }
+                message.data.password = passwordNum;
+            }
+
+            sendMessage(message);
+        }
+
+        function getRoomList() {
+            const message = {
+                namespace: 'room',
+                event: 'get_room_list_request',
+                data: {}
+            };
+
+            sendMessage(message);
+        }
+
+        function sendCustomMessage() {
+            const namespace = document.getElementById('namespace').value;
+            const event = document.getElementById('event').value;
+            const dataStr = document.getElementById('data').value;
+
+            try {
+                const data = JSON.parse(dataStr);
+                const message = {
+                    namespace: namespace,
+                    event: event,
+                    data: data
+                };
+                // Allow user to control identity_key in custom messages
+                sendMessage(message, true);
+            } catch (error) {
+                alert('Invalid JSON in Data field: ' + error.message);
+            }
+        }
+
+        function testInvalidNamespace() {
+            const message = {
+                namespace: 'invalid',
+                event: 'test',
+                data: {}
+            };
+            // Don't add identity_key for test error messages
+            sendMessage(message, false);
+        }
+
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        // Update room info display from create_room or join_room response
+        function updateRoomInfo(roomData) {
+            if (!roomData) return;
+
+            if (roomData.id) {
+                document.getElementById('roomInfoId').textContent = roomData.id.substring(0, 8) + '...';
+                document.getElementById('roomInfoId').title = roomData.id;
+            }
+
+            if (roomData.current_players !== undefined && roomData.max_players !== undefined) {
+                document.getElementById('roomInfoPlayers').textContent = roomData.current_players;
+                document.getElementById('roomInfoMaxPlayers').textContent = roomData.max_players;
+
+                // Color code based on room capacity
+                const playersEl = document.getElementById('roomInfoPlayers');
+                if (roomData.current_players >= roomData.max_players) {
+                    playersEl.style.color = '#e74c3c'; // Red when full
+                } else if (roomData.current_players > 0) {
+                    playersEl.style.color = '#f39c12'; // Orange when has players
+                } else {
+                    playersEl.style.color = '#95a5a6'; // Gray when empty
+                }
+            }
+
+            if (roomData.is_active !== undefined) {
+                const statusEl = document.getElementById('roomInfoStatus');
+                statusEl.textContent = roomData.is_active ? 'Active' : 'Inactive';
+                statusEl.style.color = roomData.is_active ? '#27ae60' : '#e74c3c';
+            }
+        }
+
+        // Update room info from user_joined broadcast
+        function updateRoomInfoFromBroadcast(broadcastData) {
+            if (!broadcastData) return;
+
+            // Update room ID if we don't have it yet
+            if (broadcastData.room_id && !document.getElementById('roomInfoId').textContent.includes('...')) {
+                document.getElementById('roomInfoId').textContent = broadcastData.room_id.substring(0, 8) + '...';
+                document.getElementById('roomInfoId').title = broadcastData.room_id;
+            }
+
+            // Update players count from broadcast
+            if (broadcastData.current_players !== undefined && broadcastData.max_players !== undefined) {
+                document.getElementById('roomInfoPlayers').textContent = broadcastData.current_players;
+                document.getElementById('roomInfoMaxPlayers').textContent = broadcastData.max_players;
+
+                // Color code based on room capacity
+                const playersEl = document.getElementById('roomInfoPlayers');
+                if (broadcastData.current_players >= broadcastData.max_players) {
+                    playersEl.style.color = '#e74c3c'; // Red when full
+                } else if (broadcastData.current_players > 0) {
+                    playersEl.style.color = '#f39c12'; // Orange when has players
+                } else {
+                    playersEl.style.color = '#95a5a6'; // Gray when empty
+                }
+            }
+        }
+
+        // Handle Enter key in JWT token field
+        document.getElementById('jwtToken').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                connect();
+            }
+        });
+    </script>
+</body>
+
+</html>
