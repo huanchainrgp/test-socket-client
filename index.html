@@ -634,6 +634,38 @@
                     </small>
                 </div>
 
+                <div class="form-group">
+                    <button onclick="createWallet()" id="createWalletBtn" class="success" style="width: 100%; margin: 0;">
+                        💰 Create Wallet
+                    </button>
+                    <div id="createWalletStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 16px; border-radius: var(--radius); margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 14px; font-weight: 600; color: var(--text-primary);">
+                        💵 Deposit</h3>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositAmount">Amount *</label>
+                        <input type="number" id="depositAmount" placeholder="1" value="1" min="0" step="0.01">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositUserId">User ID <span style="color: var(--text-tertiary); font-size: 11px;">(Optional)</span></label>
+                        <input type="text" id="depositUserId" placeholder="Leave empty to use token user_id">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositReferenceId">Reference ID <span style="color: var(--text-tertiary); font-size: 11px;">(Optional)</span></label>
+                        <input type="text" id="depositReferenceId" placeholder="string">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="depositMetadata">Metadata <span style="color: var(--text-tertiary); font-size: 11px;">(Optional - JSON)</span></label>
+                        <textarea id="depositMetadata" placeholder='{"additionalProp1": {}}' style="min-height: 60px; font-size: 12px;">{}</textarea>
+                    </div>
+                    <button onclick="deposit()" id="depositBtn" class="success" style="width: 100%; margin: 0;">
+                        💵 Deposit
+                    </button>
+                    <div id="depositStatus" style="margin-top: 10px; font-size: 12px; display: none;"></div>
+                </div>
+
                 <div id="userInfo" class="user-info-box" style="display: none;">
                     <strong>👤 User:</strong> <span id="userId">-</span> | <span id="username">-</span>
                 </div>
@@ -943,6 +975,214 @@
                 // Re-enable button
                 autoFillBtn.disabled = false;
                 autoFillBtn.textContent = '🔑 Auto Fill Access Token';
+            }
+        }
+
+        // Create wallet for user
+        async function createWallet() {
+            const token = document.getElementById('jwtToken').value.trim();
+            const statusDiv = document.getElementById('createWalletStatus');
+            const createWalletBtn = document.getElementById('createWalletBtn');
+
+            if (!token) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter JWT token first!';
+                return;
+            }
+
+            // Disable button and show loading
+            createWalletBtn.disabled = true;
+            createWalletBtn.textContent = '⏳ Creating...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = 'var(--info)';
+            statusDiv.textContent = '🔄 Creating wallet...';
+
+            try {
+                const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
+                const endpoint = `${baseApi}/wallet/create-user-balance`;
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: ''
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show success message
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--success)';
+                    statusDiv.textContent = '✅ Wallet created successfully!';
+                    
+                    // Add success message to messages panel
+                    addMessage('received', {
+                        type: 'success',
+                        message: 'Wallet created successfully',
+                        endpoint: endpoint,
+                        data: data
+                    });
+                } else {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = `❌ Failed to create wallet: ${errorData.message || response.statusText}`;
+                    
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'Create wallet failed',
+                        endpoint: endpoint,
+                        status: response.status,
+                        error: errorData
+                    });
+                }
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                
+                addMessage('error', {
+                    type: 'error',
+                    message: 'Create wallet error',
+                    error: error.message
+                });
+            } finally {
+                // Re-enable button
+                createWalletBtn.disabled = false;
+                createWalletBtn.textContent = '💰 Create Wallet';
+            }
+        }
+
+        // Deposit to wallet
+        async function deposit() {
+            const token = document.getElementById('jwtToken').value.trim();
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const userId = document.getElementById('depositUserId').value.trim();
+            const referenceId = document.getElementById('depositReferenceId').value.trim();
+            const metadataStr = document.getElementById('depositMetadata').value.trim();
+            const statusDiv = document.getElementById('depositStatus');
+            const depositBtn = document.getElementById('depositBtn');
+
+            if (!token) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter JWT token first!';
+                return;
+            }
+
+            if (!amount || amount <= 0) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Please enter a valid amount!';
+                return;
+            }
+
+            // Parse metadata JSON
+            let metadata = {};
+            if (metadataStr) {
+                try {
+                    metadata = JSON.parse(metadataStr);
+                } catch (e) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = '❌ Invalid JSON in Metadata field: ' + e.message;
+                    return;
+                }
+            }
+
+            // If userId not provided, try to get from JWT token
+            let finalUserId = userId;
+            if (!finalUserId) {
+                try {
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length === 3) {
+                        const payload = JSON.parse(atob(tokenParts[1]));
+                        finalUserId = payload.user_id || payload.sub || payload.id || '';
+                    }
+                } catch (e) {
+                    console.log('Could not parse JWT token for user_id:', e);
+                }
+            }
+
+            // Disable button and show loading
+            depositBtn.disabled = true;
+            depositBtn.textContent = '⏳ Processing...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = 'var(--info)';
+            statusDiv.textContent = '🔄 Processing deposit...';
+
+            try {
+                const baseApi = window.CONFIG?.BASE_API || 'http://localhost:3003';
+                const endpoint = `${baseApi}/wallet/credit`;
+
+                const requestBody = {
+                    amount: amount,
+                    metadata: metadata,
+                    reference_id: referenceId || 'string',
+                    user_id: finalUserId || 'string'
+                };
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Show success message
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--success)';
+                    statusDiv.textContent = `✅ Deposit successful! Amount: ${amount}`;
+                    
+                    // Add success message to messages panel
+                    addMessage('received', {
+                        type: 'success',
+                        message: 'Deposit successful',
+                        endpoint: endpoint,
+                        request: requestBody,
+                        response: data
+                    });
+                } else {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = 'var(--danger)';
+                    statusDiv.textContent = `❌ Failed to deposit: ${errorData.message || response.statusText}`;
+                    
+                    addMessage('error', {
+                        type: 'error',
+                        message: 'Deposit failed',
+                        endpoint: endpoint,
+                        status: response.status,
+                        request: requestBody,
+                        error: errorData
+                    });
+                }
+            } catch (error) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = 'var(--danger)';
+                statusDiv.textContent = '❌ Error: ' + error.message;
+                
+                addMessage('error', {
+                    type: 'error',
+                    message: 'Deposit error',
+                    error: error.message
+                });
+            } finally {
+                // Re-enable button
+                depositBtn.disabled = false;
+                depositBtn.textContent = '💵 Deposit';
             }
         }
 
